@@ -10,6 +10,7 @@ import logout from "./logout";
 import profile from "./profile";
 import setup from "./setup";
 import tags from "./tags";
+import blog from "./blog";
 
 const page = new Hono();
 
@@ -24,5 +25,6 @@ page.route("/accounts", accounts);
 page.route("/emojis", emojis);
 page.route("/federation", federation);
 page.route("/tags", tags);
+page.route("/blog", blog);
 
 export default page;
