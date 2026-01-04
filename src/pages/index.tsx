@@ -12,6 +12,7 @@ import profile from "./profile";
 import setup from "./setup";
 import tags from "./tags";
 import thumbnail_cleanup from "./thumbnail_cleanup";
+import blog from "./blog";
 
 const page = new Hono();
 
@@ -27,5 +28,6 @@ page.route("/emojis", emojis);
 page.route("/federation", federation);
 page.route("/thumbnail_cleanup", thumbnail_cleanup);
 page.route("/tags", tags);
+page.route("/blog", blog);
 
 export default page;
