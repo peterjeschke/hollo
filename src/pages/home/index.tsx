@@ -1,21 +1,18 @@
-import { escape } from "es-toolkit";
 import { Hono } from "hono";
-
+import xss from "xss";
 import { Layout } from "../../components/Layout.tsx";
-import { renderCustomEmojis } from "../../custom-emoji.ts";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
 import db from "../../db.ts";
-import { getInstanceHost } from "../../instance-host.ts";
-import { proxyUrl } from "../../media-proxy.ts";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { Post as PostView } from "../../components/Post.tsx";
+import {
+  accountOwners,
+  posts,
+} from "../../schema.ts";
 
 const homePage = new Hono().basePath("/");
 
 homePage.get("/", async (c) => {
-  const credential = await db.query.credentials.findFirst();
-  if (credential == null) return c.redirect("/setup");
-  const owners = await db.query.accountOwners.findMany({
-    with: { account: true },
-  });
-  if (owners.length < 1) return c.redirect("/accounts");
   if (
     "HOME_URL" in process.env &&
     // oxlint-disable-next-line typescript/dot-notation
@@ -26,103 +23,222 @@ homePage.get("/", async (c) => {
     // oxlint-disable-next-line typescript/dot-notation
     return c.redirect(process.env["HOME_URL"]);
   }
-  const host = getInstanceHost(new URL(c.req.url));
-  const themeColor = owners[0]?.themeColor;
+  const owner = await db.query.accountOwners.findFirst({
+    where: eq(accountOwners.handle, "peter"),
+    with: { account: true },
+  });
+  if (owner == null) return c.notFound();
+  const blogList = await db.query.posts.findMany({
+    where: and(
+      eq(posts.accountId, owner.id),
+      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+      eq(posts.type, "Article")
+    ),
+    orderBy: desc(posts.id),
+    limit: 50,
+  });
+  const postList = await db.query.posts.findMany({
+    where: and(
+      eq(posts.accountId, owner.id),
+      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+      or(eq(posts.type, "Note"), eq(posts.type, "Question")),
+      isNull(posts.sharingId)
+    ),
+    orderBy: desc(posts.id),
+    limit: 50,
+    with: {
+      account: true,
+      media: true,
+      poll: { with: { options: true } },
+      sharing: {
+        with: {
+          account: true,
+          media: true,
+          poll: { with: { options: true } },
+          replyTarget: { with: { account: true } },
+          quoteTarget: {
+            with: {
+              account: true,
+              media: true,
+              poll: { with: { options: true } },
+              replyTarget: { with: { account: true } },
+              reactions: true,
+            },
+          },
+          reactions: true,
+        },
+      },
+      replyTarget: { with: { account: true } },
+      quoteTarget: {
+        with: {
+          account: true,
+          media: true,
+          poll: { with: { options: true } },
+          replyTarget: { with: { account: true } },
+          reactions: true,
+        },
+      },
+      reactions: true,
+    },
+  });
+
   return c.html(
-    <Layout title={host} themeColor={themeColor}>
-      <main class="mx-auto w-full max-w-2xl px-4 py-12 sm:py-16">
-        <header class="mb-10 text-center">
-          <picture class="inline-block">
-            <source
-              srcset="/public/logo-white.svg"
-              media="(prefers-color-scheme: dark)"
-            />
-            <img
-              src="/public/logo-black.svg"
-              width={48}
-              height={48}
-              alt=""
-              class="mx-auto"
-            />
-          </picture>
-          <h1 class="mt-4 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-            {host}
-          </h1>
-          <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            This Hollo instance hosts the following{" "}
-            {owners.length === 1 ? "account" : "accounts"}.
-          </p>
-        </header>
-        <ul class="space-y-4">
-          {owners.map((owner) => {
-            const url = owner.account.url ?? owner.account.iri;
-            const nameHtml = renderCustomEmojis(
-              escape(owner.account.name),
-              owner.account.emojis,
-              c.req.url,
-            );
-            const bioHtml = renderCustomEmojis(
-              owner.account.bioHtml ?? "",
-              owner.account.emojis,
-              c.req.url,
-            );
-            const avatar = proxyUrl(owner.account.avatarUrl, c.req.url);
-            return (
-              <li>
-                <article class="rounded-xl border border-neutral-200 bg-white p-5 transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700">
-                  <div class="flex items-start gap-4">
-                    {avatar && (
-                      <a
-                        href={url}
-                        aria-label={owner.account.name}
-                        class="shrink-0"
-                      >
-                        <img
-                          src={avatar}
-                          alt=""
-                          width={56}
-                          height={56}
-                          class="size-14 rounded-full object-cover"
-                        />
-                      </a>
-                    )}
-                    <div class="min-w-0 flex-1">
-                      <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                        <a
-                          href={url}
-                          dangerouslySetInnerHTML={{ __html: nameHtml }}
-                          aria-label={owner.account.name}
-                          class="hover:text-brand-700 dark:hover:text-brand-400"
-                        />
-                      </h2>
-                      <p class="mt-0.5 select-all text-sm text-neutral-500 dark:text-neutral-400">
-                        {owner.account.handle}
-                      </p>
-                      {bioHtml && (
-                        <div
-                          class="prose prose-sm prose-neutral dark:prose-invert mt-3 max-w-none"
-                          dangerouslySetInnerHTML={{ __html: bioHtml }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </article>
-              </li>
-            );
-          })}
-        </ul>
-        <div class="mt-10 text-center">
-          <a
-            href="/accounts"
-            class="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-          >
-            <span class="i-lucide-settings" aria-hidden="true" />
-            Administration dashboard
-          </a>
-        </div>
-      </main>
+    <Layout title="Peter Jeschke">
+      <SiteHeader />
+      <section>
+        <h2>About</h2>
+        <p>Not much yet</p>
+        <p>This is actually a Mastodon-compatible site in the fediverse. You can follow me at <span style="user-select: all;">@peter@jeschke.dev</span> or just read my most recent posts here:</p>
+      </section>
+      <div class="grid">
+        <section>
+          <h2><a href="/blog">Blog</a></h2>
+          {blogList.map((post) => (
+            <article>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <h2 style="margin: 0;">
+                  <a href={post.url ?? post.iri}>{post.summary ?? "Untitled"}</a>
+                </h2>
+                <small>
+                  <time dateTime={(post.published ?? post.updated).toISOString()}>
+                    {(post.published ?? post.updated).toLocaleString("en", {
+                      dateStyle: "medium",
+                    })}
+                  </time>
+                </small>
+              </div>
+            </article>
+          ))}
+        </section>
+        <section>
+          <h2><a href="/@peter">Toots</a></h2>
+          {postList.map((post) => (
+            <PostView post={post} />
+          ))}
+        </section>
+      </div>
     </Layout>,
   );
+});
+
+async function getOwnPostsForFeed(handle: string) {
+  const owner = await db.query.accountOwners.findFirst({
+    where: eq(accountOwners.handle, handle),
+    with: { account: true },
+  });
+  if (owner == null) return null;
+  const postList = await db.query.posts.findMany({
+    with: { account: true },
+    where: and(
+      eq(posts.accountId, owner.id),
+      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+      or(eq(posts.type, "Note"), eq(posts.type, "Question")),
+      isNull(posts.sharingId),
+    ),
+    orderBy: desc(posts.published),
+    limit: 100,
+  });
+  return { owner, postList };
+}
+
+homePage.get("/atom.xml", async (c) => {
+  const data = await getOwnPostsForFeed("peter");
+  if (data == null) return c.notFound();
+  const { owner, postList } = data;
+  const canonicalUrl = new URL(c.req.url);
+  canonicalUrl.search = "";
+  const homeUrl = new URL(c.req.url);
+  homeUrl.pathname = "/";
+  homeUrl.search = "";
+  const response = await c.html(
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <id>urn:uuid:{owner.id}:posts</id>
+      <title>{owner.account.name}</title>
+      <link rel="self" type="application/atom+xml" href={canonicalUrl.href} />
+      <link rel="alternate" type="text/html" href={homeUrl.href} />
+      <author>
+        <name>{owner.account.name}</name>
+        <uri>{owner.account.url ?? owner.account.iri}</uri>
+      </author>
+      <updated>
+        {(postList[0]?.updated ?? owner.account.updated).toISOString()}
+      </updated>
+      {postList.map((post) => {
+        const title = xss(post.contentHtml ?? "", {
+          allowCommentTag: false,
+          whiteList: {},
+          stripIgnoreTag: true,
+          stripBlankChar: false,
+        })
+          .trimStart()
+          .replace(/\r?\n.*$/, "");
+        return (
+          <entry>
+            <id>urn:uuid:{post.id}</id>
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: xss protected */}
+            <title dangerouslySetInnerHTML={{ __html: title }} />
+            <link rel="alternate" type="text/html" href={post.url ?? post.iri} />
+            <link
+              rel="alternate"
+              type="application/activity+json"
+              href={post.iri}
+            />
+            <author>
+              <name>{post.account.name}</name>
+              <uri>{post.account.url ?? post.account.iri}</uri>
+            </author>
+            <content type="html">{post.contentHtml}</content>
+            {post.published && (
+              <published>{post.published.toISOString()}</published>
+            )}
+            <updated>{post.updated.toISOString()}</updated>
+          </entry>
+        );
+      })}
+    </feed>,
+  );
+  response.headers.set("Content-Type", "application/atom+xml");
+  return response;
+});
+
+homePage.get("/rss.xml", async (c) => {
+  const data = await getOwnPostsForFeed("peter");
+  if (data == null) return c.notFound();
+  const { owner, postList } = data;
+  const homeUrl = new URL(c.req.url);
+  homeUrl.pathname = "/";
+  homeUrl.search = "";
+  const response = await c.html(
+    <rss version="2.0">
+      <channel>
+        <title>{owner.account.name}</title>
+        <link>{homeUrl.href}</link>
+        <description>Posts by {owner.account.name}</description>
+        {postList.map((post) => {
+          const title = xss(post.contentHtml ?? "", {
+            allowCommentTag: false,
+            whiteList: {},
+            stripIgnoreTag: true,
+            stripBlankChar: false,
+          })
+            .trimStart()
+            .replace(/\r?\n.*$/, "");
+          const pubDate = (post.published ?? post.updated).toUTCString();
+          return (
+            <item>
+              <title>{title}</title>
+              <link>{post.url ?? post.iri}</link>
+              <guid>{`urn:uuid:${post.id}`}</guid>
+              <pubDate>{pubDate}</pubDate>
+              <description>{post.contentHtml}</description>
+            </item>
+          );
+        })}
+      </channel>
+    </rss>,
+  );
+  response.headers.set("Content-Type", "application/rss+xml");
+  return response;
 });
 
 export default homePage;

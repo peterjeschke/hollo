@@ -60,6 +60,7 @@ import {
 } from "./inbox";
 import "./nodeinfo";
 import "./objects";
+import "./article-dispatcher";
 import { isPost } from "./post";
 
 const inboxLogger = getLogger(["hollo", "federation", "inbox"]);

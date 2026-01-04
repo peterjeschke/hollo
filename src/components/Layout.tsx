@@ -59,6 +59,43 @@ export function Layout(props: PropsWithChildren<LayoutProps>) {
         ))}
         <link rel="stylesheet" href={`/public/uno.css?v=${unoCssVersion()}`} />
         <link
+          rel="alternate"
+          type="application/atom+xml"
+          title="Blog (Atom)"
+          href="/blog/atom.xml"
+        />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="Blog (RSS)"
+          href="/blog/rss.xml"
+        />
+        <link
+          rel="alternate"
+          type="application/atom+xml"
+          title="All toots (Atom)"
+          href="/@peter/atom.xml"
+        />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="All toots (RSS)"
+          href="/@peter/rss.xml"
+        />
+        <link
+          rel="alternate"
+          type="application/atom+xml"
+          title="Own posts (Atom)"
+          href="/atom.xml"
+        />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="Own posts (RSS)"
+          href="/rss.xml"
+        />
+        <link rel="stylesheet" href="/public/hollo.css" />
+        <link
           rel="icon"
           type="image/png"
           sizes="500x500"

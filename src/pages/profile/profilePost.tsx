@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { Layout } from "../../components/Layout.tsx";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
 import { type PostForView, Post as PostView } from "../../components/Post.tsx";
 import db from "../../db.ts";
 import { type AccountOwner } from "../../schema.ts";
@@ -64,23 +65,6 @@ function PostPage({ post, accountOwner, baseUrl }: PostPageProps) {
       ]}
       themeColor={accountOwner.themeColor}
     >
-      <main class="mx-auto w-full max-w-2xl px-4 py-8 sm:py-10">
-        <PostView post={post} featured={true} baseUrl={baseUrl} />
-        {post.replies.length > 0 && (
-          <section class="mt-8">
-            <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-              {post.replies.length === 1
-                ? "1 reply"
-                : `${post.replies.length} replies`}
-            </h2>
-            <div class="mt-2 divide-y divide-neutral-200 dark:divide-neutral-800">
-              {post.replies.map((reply) => (
-                <PostView post={reply} baseUrl={baseUrl} />
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
     </Layout>
   );
 }
