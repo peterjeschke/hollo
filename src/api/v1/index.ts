@@ -23,6 +23,7 @@ import {
 import { uuid } from "../../uuid";
 import accounts from "./accounts";
 import apps from "./apps";
+import articles from "./articles";
 import featured_tags from "./featured_tags";
 import follow_requests from "./follow_requests";
 import instance from "./instance";
@@ -40,6 +41,7 @@ const app = new Hono<{ Variables: Variables }>();
 
 app.route("/apps", apps);
 app.route("/accounts", accounts);
+app.route("/articles", articles);
 app.route("/featured_tags", featured_tags);
 app.route("/follow_requests", follow_requests);
 app.route("/instance", instance);
