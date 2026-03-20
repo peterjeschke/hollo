@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { Layout } from "../../components/Layout.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
 import db from "../../db.ts";
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
 import { Post as PostView } from "../../components/Post.tsx";
 import {
   accountOwners,
@@ -75,7 +75,8 @@ homePage.get("/", async (c) => {
     where: and(
       eq(posts.accountId, owner.id),
       or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-      or(eq(posts.type, "Note"), eq(posts.type, "Question"))
+      or(eq(posts.type, "Note"), eq(posts.type, "Question")),
+      isNull(posts.sharingId)
     ),
     orderBy: desc(posts.id),
     limit: 50,
