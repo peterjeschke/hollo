@@ -1,16 +1,13 @@
-import { and, eq, inArray, or } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { Layout } from "../../components/Layout.tsx";
-import { Post as PostView } from "../../components/Post.tsx";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
+import { renderCustomEmojis } from "../../text.ts";
 import db from "../../db.ts";
 import {
   type Account,
   type AccountOwner,
-  type Medium,
-  type Poll,
-  type PollOption,
   type Post,
-  type Reaction,
   accountOwners,
   posts,
 } from "../../schema.ts";
@@ -30,78 +27,10 @@ blogPost.get<"/blog/:id{[-a-f0-9]+}">(async (c) => {
       eq(posts.accountId, accountOwner.id),
       eq(posts.id, postId),
       or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-      eq(posts.type, "Article")
+      eq(posts.type, "Article"),
     ),
     with: {
       account: true,
-      media: true,
-      poll: { with: { options: true } },
-      sharing: {
-        with: {
-          account: true,
-          media: true,
-          poll: { with: { options: true } },
-          replyTarget: { with: { account: true } },
-          quoteTarget: {
-            with: {
-              account: true,
-              media: true,
-              poll: { with: { options: true } },
-              replyTarget: { with: { account: true } },
-              reactions: true,
-            },
-          },
-          reactions: true,
-        },
-      },
-      replyTarget: { with: { account: true } },
-      quoteTarget: {
-        with: {
-          account: true,
-          media: true,
-          poll: { with: { options: true } },
-          replyTarget: { with: { account: true } },
-          reactions: true,
-        },
-      },
-      replies: {
-        where: inArray(posts.visibility, ["public", "unlisted"]),
-        with: {
-          account: true,
-          media: true,
-          poll: { with: { options: true } },
-          sharing: {
-            with: {
-              account: true,
-              media: true,
-              poll: { with: { options: true } },
-              replyTarget: { with: { account: true } },
-              quoteTarget: {
-                with: {
-                  account: true,
-                  media: true,
-                  poll: { with: { options: true } },
-                  replyTarget: { with: { account: true } },
-                  reactions: true,
-                },
-              },
-              reactions: true,
-            },
-          },
-          replyTarget: { with: { account: true } },
-          quoteTarget: {
-            with: {
-              account: true,
-              media: true,
-              poll: { with: { options: true } },
-              replyTarget: { with: { account: true } },
-              reactions: true,
-            },
-          },
-          reactions: true,
-        },
-      },
-      reactions: true,
     },
   });
   if (post == null) return c.notFound();
@@ -110,86 +39,15 @@ blogPost.get<"/blog/:id{[-a-f0-9]+}">(async (c) => {
 
 interface PostPageProps {
   readonly accountOwner: AccountOwner;
-  readonly post: Post & {
-    account: Account;
-    media: Medium[];
-    poll: (Poll & { options: PollOption[] }) | null;
-    sharing:
-    | (Post & {
-      account: Account;
-      media: Medium[];
-      poll: (Poll & { options: PollOption[] }) | null;
-      replyTarget: (Post & { account: Account }) | null;
-      quoteTarget:
-      | (Post & {
-        account: Account;
-        media: Medium[];
-        poll: (Poll & { options: PollOption[] }) | null;
-        replyTarget: (Post & { account: Account }) | null;
-        reactions: Reaction[];
-      })
-      | null;
-      reactions: Reaction[];
-    })
-    | null;
-    replyTarget: (Post & { account: Account }) | null;
-    quoteTarget:
-    | (Post & {
-      account: Account;
-      media: Medium[];
-      poll: (Poll & { options: PollOption[] }) | null;
-      replyTarget: (Post & { account: Account }) | null;
-      reactions: Reaction[];
-    })
-    | null;
-    replies: (Post & {
-      account: Account;
-      media: Medium[];
-      poll: (Poll & { options: PollOption[] }) | null;
-      sharing:
-      | (Post & {
-        account: Account;
-        media: Medium[];
-        poll: (Poll & { options: PollOption[] }) | null;
-        replyTarget: (Post & { account: Account }) | null;
-        quoteTarget:
-        | (Post & {
-          account: Account;
-          media: Medium[];
-          poll: (Poll & { options: PollOption[] }) | null;
-          replyTarget: (Post & { account: Account }) | null;
-          reactions: Reaction[];
-        })
-        | null;
-        reactions: Reaction[];
-      })
-      | null;
-      replyTarget: (Post & { account: Account }) | null;
-      quoteTarget:
-      | (Post & {
-        account: Account;
-        media: Medium[];
-        poll: (Poll & { options: PollOption[] }) | null;
-        replyTarget: (Post & { account: Account }) | null;
-        reactions: Reaction[];
-      })
-      | null;
-      reactions: Reaction[];
-    })[];
-    reactions: Reaction[];
-  };
+  readonly post: Post & { account: Account };
 }
 
 function PostPage({ post, accountOwner }: PostPageProps) {
-  const summary =
-    post.summary ??
-    ((post.content ?? "").length > 30
-      ? `${(post.content ?? "").substring(0, 30)}…`
-      : (post.content ?? ""));
+  const contentHtml = renderCustomEmojis(post.contentHtml, post.emojis);
+  const title = post.summary ?? "Blog post";
   return (
     <Layout
-      title={`${summary} — ${post.account.name}`}
-      shortTitle={summary}
+      title={title}
       description={post.summary ?? post.content}
       imageUrl={post.account.avatarUrl}
       url={post.url ?? post.iri}
@@ -198,10 +56,28 @@ function PostPage({ post, accountOwner }: PostPageProps) {
       ]}
       themeColor={accountOwner.themeColor}
     >
-      <PostView post={post} />
-      {post.replies.map((reply) => (
-        <PostView post={reply} />
-      ))}
+      <SiteHeader />
+      <article>
+        <header>
+          <h2>{title}</h2>
+          <p>
+            <small>
+              Published{" "}
+              <time dateTime={(post.published ?? post.updated).toISOString()}>
+                {(post.published ?? post.updated).toLocaleString("en", {
+                  dateStyle: "long",
+                })}
+              </time>
+            </small>
+          </p>
+        </header>
+        {contentHtml && (
+          <div
+            dangerouslySetInnerHTML={{ __html: contentHtml }}
+            lang={post.language ?? undefined}
+          />
+        )}
+      </article>
     </Layout>
   );
 }

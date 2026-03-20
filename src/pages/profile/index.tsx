@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import xss from "xss";
 
 import { Layout } from "../../components/Layout.tsx";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
 import { Post as PostView } from "../../components/Post.tsx";
 import { Profile } from "../../components/Profile.tsx";
 import { db } from "../../db.ts";
@@ -394,6 +395,7 @@ function ProfilePage({
       ]}
       themeColor={accountOwner.themeColor}
     >
+      <SiteHeader />
       <Profile accountOwner={accountOwner} />
       {tag != null && <h2>Posts tagged #{tag}</h2>}
       {featuredTags.length > 0 && (

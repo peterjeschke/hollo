@@ -2,6 +2,7 @@ import { and, count, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import xss from "xss";
 import { Layout } from "../../components/Layout.tsx";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
 import { Post as PostView } from "../../components/Post.tsx";
 import { db } from "../../db.ts";
 import {
@@ -170,6 +171,7 @@ function ProfilePage({
         { rel: "alternate", type: "application/atom+xml", href: atomUrl },
       ]}
     >
+      <SiteHeader />
       {posts.map((post) => (
         <PostView post={post} />
       ))}

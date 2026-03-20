@@ -2,6 +2,7 @@ import { and, eq, inArray, or } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { Layout } from "../../components/Layout.tsx";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
 import { Post as PostView } from "../../components/Post.tsx";
 import db from "../../db.ts";
 import {
@@ -200,6 +201,7 @@ function PostPage({ post, accountOwner }: PostPageProps) {
       ]}
       themeColor={accountOwner.themeColor}
     >
+      <SiteHeader />
       <PostView post={post} />
       {post.replies.map((reply) => (
         <PostView post={reply} />

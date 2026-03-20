@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { Layout } from "../../components/Layout.tsx";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
 import db from "../../db.ts";
 import { and, desc, eq, or } from "drizzle-orm";
 import { Post as PostView } from "../../components/Post.tsx";
@@ -116,7 +117,7 @@ homePage.get("/", async (c) => {
 
   return c.html(
     <Layout title="Peter Jeschke">
-      <h1>Peter Jeschke</h1>
+      <SiteHeader />
       <section>
         <h2>About</h2>
         <p>Not much yet</p>

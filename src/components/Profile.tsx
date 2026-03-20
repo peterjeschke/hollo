@@ -41,12 +41,7 @@ export function Profile({ accountOwner }: ProfileProps) {
             data-placement="bottom"
           >
             {account.handle}
-          </span>{" "}
-          &middot; {`${account.followingCount} following `}
-          &middot;{" "}
-          {account.followersCount === 1
-            ? "1 follower"
-            : `${account.followersCount} followers`}
+          </span>
         </p>
       </hgroup>
       <div dangerouslySetInnerHTML={{ __html: bioHtml }} />
