@@ -30,7 +30,7 @@ homePage.get("/", async (c) => {
   const blogList = await db.query.posts.findMany({
     where: and(
       eq(posts.accountId, owner.id),
-      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+      eq(posts.visibility, "public"),
       eq(posts.type, "Article")
     ),
     orderBy: desc(posts.id),
