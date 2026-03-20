@@ -70,6 +70,7 @@ profile.get<"/:handle">(async (c) => {
     where: and(
       eq(posts.accountId, owner.id),
       or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+      ne(posts.type, "Article"),
     ),
     orderBy: desc(posts.id),
     limit: PAGE_SIZE,
