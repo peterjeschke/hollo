@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
 import xss from "xss";
 import { Layout } from "../../components/Layout.tsx";
@@ -50,7 +50,7 @@ blog.get(async (c) => {
     .where(
       and(
         eq(posts.accountId, owner.id),
-        eq(posts.visibility, "public"),
+        or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
         eq(posts.type, "Article")
       ),
     );

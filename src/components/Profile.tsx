@@ -11,7 +11,6 @@ export function Profile({ accountOwner }: ProfileProps) {
   const account = accountOwner.account;
   const nameHtml = renderCustomEmojis(escape(account.name), account.emojis);
   const bioHtml = renderCustomEmojis(account.bioHtml ?? "", account.emojis);
-  const url = account.url ?? account.iri;
   return (
     <div>
       {account.coverUrl && (
@@ -32,7 +31,7 @@ export function Profile({ accountOwner }: ProfileProps) {
           />
         )}
         <h1>
-          <a dangerouslySetInnerHTML={{ __html: nameHtml }} href={url} />
+          <a dangerouslySetInnerHTML={{ __html: nameHtml }} href="/" />
         </h1>
         <p>
           <span
