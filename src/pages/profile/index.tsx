@@ -1,4 +1,4 @@
-import { and, count, desc, eq, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, or, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import xss from "xss";
 
@@ -59,6 +59,7 @@ profile.get<"/:handle">(async (c) => {
       and(
         eq(posts.accountId, owner.id),
         or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+        ne(posts.type, "Article"),
       ),
     );
   const maxPage = Math.ceil(totalPosts / PAGE_SIZE);
@@ -111,47 +112,47 @@ profile.get<"/:handle">(async (c) => {
   const pinnedPostList =
     cont == null
       ? await db.query.pinnedPosts.findMany({
-          where: and(eq(pinnedPosts.accountId, owner.id)),
-          orderBy: desc(pinnedPosts.index),
-          with: {
-            post: {
-              with: {
-                account: true,
-                media: true,
-                poll: { with: { options: true } },
-                sharing: {
-                  with: {
-                    account: true,
-                    media: true,
-                    poll: { with: { options: true } },
-                    replyTarget: { with: { account: true } },
-                    quoteTarget: {
-                      with: {
-                        account: true,
-                        media: true,
-                        poll: { with: { options: true } },
-                        replyTarget: { with: { account: true } },
-                        reactions: true,
-                      },
+        where: and(eq(pinnedPosts.accountId, owner.id)),
+        orderBy: desc(pinnedPosts.index),
+        with: {
+          post: {
+            with: {
+              account: true,
+              media: true,
+              poll: { with: { options: true } },
+              sharing: {
+                with: {
+                  account: true,
+                  media: true,
+                  poll: { with: { options: true } },
+                  replyTarget: { with: { account: true } },
+                  quoteTarget: {
+                    with: {
+                      account: true,
+                      media: true,
+                      poll: { with: { options: true } },
+                      replyTarget: { with: { account: true } },
+                      reactions: true,
                     },
-                    reactions: true,
                   },
+                  reactions: true,
                 },
-                replyTarget: { with: { account: true } },
-                quoteTarget: {
-                  with: {
-                    account: true,
-                    media: true,
-                    poll: { with: { options: true } },
-                    replyTarget: { with: { account: true } },
-                    reactions: true,
-                  },
-                },
-                reactions: true,
               },
+              replyTarget: { with: { account: true } },
+              quoteTarget: {
+                with: {
+                  account: true,
+                  media: true,
+                  poll: { with: { options: true } },
+                  replyTarget: { with: { account: true } },
+                  reactions: true,
+                },
+              },
+              reactions: true,
             },
           },
-        })
+        },
+      })
       : [];
   const featuredTagList = await db.query.featuredTags.findMany({
     where: eq(featuredTags.accountOwnerId, owner.id),
@@ -287,33 +288,33 @@ interface ProfilePageProps {
     media: Medium[];
     poll: (Poll & { options: PollOption[] }) | null;
     sharing:
+    | (Post & {
+      account: Account;
+      media: Medium[];
+      poll: (Poll & { options: PollOption[] }) | null;
+      replyTarget: (Post & { account: Account }) | null;
+      quoteTarget:
       | (Post & {
-          account: Account;
-          media: Medium[];
-          poll: (Poll & { options: PollOption[] }) | null;
-          replyTarget: (Post & { account: Account }) | null;
-          quoteTarget:
-            | (Post & {
-                account: Account;
-                media: Medium[];
-                poll: (Poll & { options: PollOption[] }) | null;
-                replyTarget: (Post & { account: Account }) | null;
-                reactions: Reaction[];
-              })
-            | null;
-          reactions: Reaction[];
-        })
+        account: Account;
+        media: Medium[];
+        poll: (Poll & { options: PollOption[] }) | null;
+        replyTarget: (Post & { account: Account }) | null;
+        reactions: Reaction[];
+      })
       | null;
+      reactions: Reaction[];
+    })
+    | null;
     replyTarget: (Post & { account: Account }) | null;
     quoteTarget:
-      | (Post & {
-          account: Account;
-          media: Medium[];
-          poll: (Poll & { options: PollOption[] }) | null;
-          replyTarget: (Post & { account: Account }) | null;
-          reactions: Reaction[];
-        })
-      | null;
+    | (Post & {
+      account: Account;
+      media: Medium[];
+      poll: (Poll & { options: PollOption[] }) | null;
+      replyTarget: (Post & { account: Account }) | null;
+      reactions: Reaction[];
+    })
+    | null;
     reactions: Reaction[];
   })[];
   readonly pinnedPosts: (Post & {
@@ -321,33 +322,33 @@ interface ProfilePageProps {
     media: Medium[];
     poll: (Poll & { options: PollOption[] }) | null;
     sharing:
+    | (Post & {
+      account: Account;
+      media: Medium[];
+      poll: (Poll & { options: PollOption[] }) | null;
+      replyTarget: (Post & { account: Account }) | null;
+      quoteTarget:
       | (Post & {
-          account: Account;
-          media: Medium[];
-          poll: (Poll & { options: PollOption[] }) | null;
-          replyTarget: (Post & { account: Account }) | null;
-          quoteTarget:
-            | (Post & {
-                account: Account;
-                media: Medium[];
-                poll: (Poll & { options: PollOption[] }) | null;
-                replyTarget: (Post & { account: Account }) | null;
-                reactions: Reaction[];
-              })
-            | null;
-          reactions: Reaction[];
-        })
+        account: Account;
+        media: Medium[];
+        poll: (Poll & { options: PollOption[] }) | null;
+        replyTarget: (Post & { account: Account }) | null;
+        reactions: Reaction[];
+      })
       | null;
+      reactions: Reaction[];
+    })
+    | null;
     replyTarget: (Post & { account: Account }) | null;
     quoteTarget:
-      | (Post & {
-          account: Account;
-          media: Medium[];
-          poll: (Poll & { options: PollOption[] }) | null;
-          replyTarget: (Post & { account: Account }) | null;
-          reactions: Reaction[];
-        })
-      | null;
+    | (Post & {
+      account: Account;
+      media: Medium[];
+      poll: (Poll & { options: PollOption[] }) | null;
+      replyTarget: (Post & { account: Account }) | null;
+      reactions: Reaction[];
+    })
+    | null;
     reactions: Reaction[];
   })[];
   readonly featuredTags: FeaturedTag[];
@@ -384,8 +385,8 @@ function ProfilePage({
         ...(atomUrl == null
           ? []
           : [
-              { rel: "alternate", type: "application/atom+xml", href: atomUrl },
-            ]),
+            { rel: "alternate", type: "application/atom+xml", href: atomUrl },
+          ]),
         {
           rel: "alternate",
           type: "application/activity+json",
