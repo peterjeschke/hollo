@@ -3,15 +3,10 @@ import { Hono } from "hono";
 import xss from "xss";
 import { Layout } from "../../components/Layout.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
-import { Post as PostView } from "../../components/Post.tsx";
 import { db } from "../../db.ts";
 import {
   type Account,
-  type Medium,
-  type Poll,
-  type PollOption,
   type Post,
-  type Reaction,
   accountOwners,
   posts,
 } from "../../schema.ts";
@@ -69,37 +64,6 @@ blog.get(async (c) => {
     offset: (page - 1) * PAGE_SIZE,
     with: {
       account: true,
-      media: true,
-      poll: { with: { options: true } },
-      sharing: {
-        with: {
-          account: true,
-          media: true,
-          poll: { with: { options: true } },
-          replyTarget: { with: { account: true } },
-          quoteTarget: {
-            with: {
-              account: true,
-              media: true,
-              poll: { with: { options: true } },
-              replyTarget: { with: { account: true } },
-              reactions: true,
-            },
-          },
-          reactions: true,
-        },
-      },
-      replyTarget: { with: { account: true } },
-      quoteTarget: {
-        with: {
-          account: true,
-          media: true,
-          poll: { with: { options: true } },
-          replyTarget: { with: { account: true } },
-          reactions: true,
-        },
-      },
-      reactions: true,
     },
   });
   const atomUrl = new URL(c.req.url);
@@ -119,40 +83,7 @@ blog.get(async (c) => {
 });
 
 interface ProfilePageProps {
-  readonly posts: (Post & {
-    account: Account;
-    media: Medium[];
-    poll: (Poll & { options: PollOption[] }) | null;
-    sharing:
-    | (Post & {
-      account: Account;
-      media: Medium[];
-      poll: (Poll & { options: PollOption[] }) | null;
-      replyTarget: (Post & { account: Account }) | null;
-      quoteTarget:
-      | (Post & {
-        account: Account;
-        media: Medium[];
-        poll: (Poll & { options: PollOption[] }) | null;
-        replyTarget: (Post & { account: Account }) | null;
-        reactions: Reaction[];
-      })
-      | null;
-      reactions: Reaction[];
-    })
-    | null;
-    replyTarget: (Post & { account: Account }) | null;
-    quoteTarget:
-    | (Post & {
-      account: Account;
-      media: Medium[];
-      poll: (Poll & { options: PollOption[] }) | null;
-      replyTarget: (Post & { account: Account }) | null;
-      reactions: Reaction[];
-    })
-    | null;
-    reactions: Reaction[];
-  })[];
+  readonly posts: (Post & { account: Account })[];
   readonly atomUrl: string;
   readonly olderUrl?: string;
   readonly newerUrl?: string;
@@ -173,7 +104,20 @@ function ProfilePage({
     >
       <SiteHeader />
       {posts.map((post) => (
-        <PostView post={post} />
+        <article>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <h2 style="margin: 0;">
+              <a href={post.url ?? post.iri}>{post.summary ?? "Untitled"}</a>
+            </h2>
+            <small>
+              <time dateTime={(post.published ?? post.updated).toISOString()}>
+                {(post.published ?? post.updated).toLocaleString("en", {
+                  dateStyle: "medium",
+                })}
+              </time>
+            </small>
+          </div>
+        </article>
       ))}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>{newerUrl && <a href={newerUrl}>&larr; Newer</a>}</div>
