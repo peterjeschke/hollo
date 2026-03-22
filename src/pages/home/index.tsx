@@ -36,40 +36,6 @@ homePage.get("/", async (c) => {
     ),
     orderBy: desc(posts.id),
     limit: 50,
-    with: {
-      account: true,
-      media: true,
-      poll: { with: { options: true } },
-      sharing: {
-        with: {
-          account: true,
-          media: true,
-          poll: { with: { options: true } },
-          replyTarget: { with: { account: true } },
-          quoteTarget: {
-            with: {
-              account: true,
-              media: true,
-              poll: { with: { options: true } },
-              replyTarget: { with: { account: true } },
-              reactions: true,
-            },
-          },
-          reactions: true,
-        },
-      },
-      replyTarget: { with: { account: true } },
-      quoteTarget: {
-        with: {
-          account: true,
-          media: true,
-          poll: { with: { options: true } },
-          replyTarget: { with: { account: true } },
-          reactions: true,
-        },
-      },
-      reactions: true,
-    },
   });
   const postList = await db.query.posts.findMany({
     where: and(
@@ -128,7 +94,20 @@ homePage.get("/", async (c) => {
         <section>
           <h2><a href="/blog">Blog</a></h2>
           {blogList.map((post) => (
-            <PostView post={post} />
+            <article>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <h2 style="margin: 0;">
+                  <a href={post.url ?? post.iri}>{post.summary ?? "Untitled"}</a>
+                </h2>
+                <small>
+                  <time dateTime={(post.published ?? post.updated).toISOString()}>
+                    {(post.published ?? post.updated).toLocaleString("en", {
+                      dateStyle: "medium",
+                    })}
+                  </time>
+                </small>
+              </div>
+            </article>
           ))}
         </section>
         <section>
