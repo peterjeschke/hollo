@@ -127,6 +127,58 @@ function ProfilePage({
   );
 }
 
+blog.get("/rss.xml", async (c) => {
+  const owner = await db.query.accountOwners.findFirst({
+    where: eq(accountOwners.handle, "peter"),
+    with: { account: true },
+  });
+  if (owner == null) return c.notFound();
+  const postList = await db.query.posts.findMany({
+    with: { account: true },
+    where: and(eq(posts.accountId, owner.id), eq(posts.type, "Article")),
+    orderBy: desc(posts.published),
+    limit: 100,
+  });
+  const canonicalUrl = new URL(c.req.url);
+  canonicalUrl.search = "";
+  const blogUrl = new URL(c.req.url);
+  blogUrl.pathname = "/blog";
+  blogUrl.search = "";
+  const response = await c.html(
+    <rss version="2.0">
+      <channel>
+        <title>{owner.account.name}</title>
+        <link>{blogUrl.href}</link>
+        <description>Blog posts by {owner.account.name}</description>
+        {postList.map((post) => {
+          const title =
+            post.summary ??
+            xss(post.contentHtml ?? "", {
+              allowCommentTag: false,
+              whiteList: {},
+              stripIgnoreTag: true,
+              stripBlankChar: false,
+            })
+              .trimStart()
+              .replace(/\r?\n.*$/, "");
+          const pubDate = (post.published ?? post.updated).toUTCString();
+          return (
+            <item>
+              <title>{title}</title>
+              <link>{post.url ?? post.iri}</link>
+              <guid>{`urn:uuid:${post.id}`}</guid>
+              <pubDate>{pubDate}</pubDate>
+              <description>{post.contentHtml}</description>
+            </item>
+          );
+        })}
+      </channel>
+    </rss>,
+  );
+  response.headers.set("Content-Type", "application/rss+xml");
+  return response;
+});
+
 blog.get("/atom.xml", async (c) => {
   const owner = await db.query.accountOwners.findFirst({
     where: eq(accountOwners.handle, "peter"),

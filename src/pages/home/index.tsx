@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-
+import xss from "xss";
 import { Layout } from "../../components/Layout.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
 import db from "../../db.ts";
@@ -119,6 +119,126 @@ homePage.get("/", async (c) => {
       </div>
     </Layout>,
   );
+});
+
+async function getOwnPostsForFeed(handle: string) {
+  const owner = await db.query.accountOwners.findFirst({
+    where: eq(accountOwners.handle, handle),
+    with: { account: true },
+  });
+  if (owner == null) return null;
+  const postList = await db.query.posts.findMany({
+    with: { account: true },
+    where: and(
+      eq(posts.accountId, owner.id),
+      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+      or(eq(posts.type, "Note"), eq(posts.type, "Question")),
+      isNull(posts.sharingId),
+    ),
+    orderBy: desc(posts.published),
+    limit: 100,
+  });
+  return { owner, postList };
+}
+
+homePage.get("/atom.xml", async (c) => {
+  const data = await getOwnPostsForFeed("peter");
+  if (data == null) return c.notFound();
+  const { owner, postList } = data;
+  const canonicalUrl = new URL(c.req.url);
+  canonicalUrl.search = "";
+  const homeUrl = new URL(c.req.url);
+  homeUrl.pathname = "/";
+  homeUrl.search = "";
+  const response = await c.html(
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <id>urn:uuid:{owner.id}:posts</id>
+      <title>{owner.account.name}</title>
+      <link rel="self" type="application/atom+xml" href={canonicalUrl.href} />
+      <link rel="alternate" type="text/html" href={homeUrl.href} />
+      <author>
+        <name>{owner.account.name}</name>
+        <uri>{owner.account.url ?? owner.account.iri}</uri>
+      </author>
+      <updated>
+        {(postList[0]?.updated ?? owner.account.updated).toISOString()}
+      </updated>
+      {postList.map((post) => {
+        const title = xss(post.contentHtml ?? "", {
+          allowCommentTag: false,
+          whiteList: {},
+          stripIgnoreTag: true,
+          stripBlankChar: false,
+        })
+          .trimStart()
+          .replace(/\r?\n.*$/, "");
+        return (
+          <entry>
+            <id>urn:uuid:{post.id}</id>
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: xss protected */}
+            <title dangerouslySetInnerHTML={{ __html: title }} />
+            <link rel="alternate" type="text/html" href={post.url ?? post.iri} />
+            <link
+              rel="alternate"
+              type="application/activity+json"
+              href={post.iri}
+            />
+            <author>
+              <name>{post.account.name}</name>
+              <uri>{post.account.url ?? post.account.iri}</uri>
+            </author>
+            <content type="html">{post.contentHtml}</content>
+            {post.published && (
+              <published>{post.published.toISOString()}</published>
+            )}
+            <updated>{post.updated.toISOString()}</updated>
+          </entry>
+        );
+      })}
+    </feed>,
+  );
+  response.headers.set("Content-Type", "application/atom+xml");
+  return response;
+});
+
+homePage.get("/rss.xml", async (c) => {
+  const data = await getOwnPostsForFeed("peter");
+  if (data == null) return c.notFound();
+  const { owner, postList } = data;
+  const homeUrl = new URL(c.req.url);
+  homeUrl.pathname = "/";
+  homeUrl.search = "";
+  const response = await c.html(
+    <rss version="2.0">
+      <channel>
+        <title>{owner.account.name}</title>
+        <link>{homeUrl.href}</link>
+        <description>Posts by {owner.account.name}</description>
+        {postList.map((post) => {
+          const title = xss(post.contentHtml ?? "", {
+            allowCommentTag: false,
+            whiteList: {},
+            stripIgnoreTag: true,
+            stripBlankChar: false,
+          })
+            .trimStart()
+            .replace(/\r?\n.*$/, "");
+          const pubDate = (post.published ?? post.updated).toUTCString();
+          return (
+            <item>
+              <title>{title}</title>
+              <link>{post.url ?? post.iri}</link>
+              <guid>{`urn:uuid:${post.id}`}</guid>
+              <pubDate>{pubDate}</pubDate>
+              <description>{post.contentHtml}</description>
+            </item>
+          );
+        })}
+      </channel>
+    </rss>,
+  );
+  response.headers.set("Content-Type", "application/rss+xml");
+  return response;
 });
 
 export default homePage;
