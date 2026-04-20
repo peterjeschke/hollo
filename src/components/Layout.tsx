@@ -80,7 +80,6 @@ export function Layout(props: PropsWithChildren<LayoutProps>) {
           href="/rss.xml"
         />
         <link rel="stylesheet" href={`/public/pico.${themeColor}.min.css`} />
-        <link rel="stylesheet" href="/public/pico.colors.min.css" />
         <link rel="stylesheet" href="/public/hollo.css" />
         <link
           rel="icon"
