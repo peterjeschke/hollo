@@ -2,7 +2,7 @@ import { and, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { Layout } from "../../components/Layout.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
-import { renderCustomEmojis } from "../../text.ts";
+import { renderCustomEmojis } from "../../custom-emoji";
 import db from "../../db.ts";
 import {
   type Account,
