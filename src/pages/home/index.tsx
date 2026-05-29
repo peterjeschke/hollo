@@ -5,10 +5,13 @@ import { Layout } from "../../components/Layout.tsx";
 import { Post as PostView } from "../../components/Post.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
 import db from "../../db.ts";
+import { getLogger } from "@logtape/logtape";
 
+const logger = getLogger(["hollo", "home"]);
 const homePage = new Hono().basePath("/");
 
 homePage.get("/", async (c) => {
+  logger.info("GET /")
   if (
     "HOME_URL" in process.env &&
     // oxlint-disable-next-line typescript/dot-notation
@@ -23,6 +26,7 @@ homePage.get("/", async (c) => {
     where: { handle: { eq: "peter" } },
     with: { account: true },
   });
+  logger.info("owner: " + owner)
   if (owner == null) return c.notFound();
   const blogList = await db.query.posts.findMany({
     where: {
@@ -33,6 +37,7 @@ homePage.get("/", async (c) => {
     orderBy: { id: "desc" },
     limit: 50,
   });
+  logger.info("bloglist")
   const postList = await db.query.posts.findMany({
     where: {
       accountId: owner.id,
@@ -84,6 +89,7 @@ homePage.get("/", async (c) => {
     },
   });
 
+  logger.info("postlist")
   return c.html(
     <Layout title="Peter Jeschke">
       <SiteHeader />
@@ -142,11 +148,13 @@ homePage.get("/", async (c) => {
 });
 
 async function getOwnPostsForFeed(handle: string) {
+  logger.info("=> getOwnPostsForFeed")
   const owner = await db.query.accountOwners.findFirst({
     where: { handle: { eq: handle } },
     with: { account: true },
   });
   if (owner == null) return null;
+  logger.info("=> getOwnPostsForFeed: before postList")
   const postList = await db.query.posts.findMany({
     with: { account: true },
     where: {
@@ -164,6 +172,7 @@ async function getOwnPostsForFeed(handle: string) {
     orderBy: { published: "desc" },
     limit: 100,
   });
+  logger.info("<= getOwnPostsForFeed")
   return { owner, postList };
 }
 
