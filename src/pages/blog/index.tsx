@@ -136,10 +136,10 @@ blog.get("/rss.xml", async (c) => {
   const postList = await db.query.posts.findMany({
     with: { account: true },
     where: {
-      accountId: { eq: owner.id },
-      type: { eq: "Article" },
+      accountId: owner.id,
+      type: "Article",
     },
-    orderBy: (posts, { desc }) => [desc(posts.published)],
+    orderBy: { published: "desc" },
     limit: 100,
   });
   const canonicalUrl = new URL(c.req.url);
@@ -194,7 +194,7 @@ blog.get("/atom.xml", async (c) => {
       accountId: { eq: owner.id },
       type: { eq: "Article" },
     },
-    orderBy: (posts, { desc }) => [desc(posts.published)],
+    orderBy: { published: "desc" },
     limit: 100,
   });
   const canonicalUrl = new URL(c.req.url);

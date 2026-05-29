@@ -80,10 +80,10 @@ profile.get<"/:handle">(async (c) => {
   const pinnedPostList =
     cont == null
       ? await db.query.pinnedPosts.findMany({
-          where: { accountId: { eq: owner.id } },
-          orderBy: (pinnedPosts, { desc }) => [desc(pinnedPosts.index)],
-          with: { post: { with: postViewRelations } },
-        })
+        where: { accountId: { eq: owner.id } },
+        orderBy: (pinnedPosts, { desc }) => [desc(pinnedPosts.index)],
+        with: { post: { with: postViewRelations } },
+      })
       : [];
   const featuredTagList = await db.query.featuredTags.findMany({
     where: { accountOwnerId: { eq: owner.id } },
@@ -224,8 +224,8 @@ function ProfilePage({
         ...(atomUrl == null
           ? []
           : [
-              { rel: "alternate", type: "application/atom+xml", href: atomUrl },
-            ]),
+            { rel: "alternate", type: "application/atom+xml", href: atomUrl },
+          ]),
         {
           rel: "alternate",
           type: "application/activity+json",
@@ -360,13 +360,13 @@ profile.get("/atom.xml", async (c) => {
   const postList = await db.query.posts.findMany({
     with: { account: true },
     where: {
-      RAW: (posts, { and, eq, or }) =>
-        and(
-          eq(posts.accountId, owner.id),
-          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-        )!,
+      accountId: owner.id,
+      OR: [
+        { visibility: "public" },
+        { visibility: "unlisted" }
+      ]
     },
-    orderBy: (posts, { desc }) => [desc(posts.published)],
+    orderBy: { published: "desc" },
     limit: 100,
   });
   const canonicalUrl = new URL(c.req.url);
