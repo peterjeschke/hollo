@@ -26,27 +26,27 @@ homePage.get("/", async (c) => {
   if (owner == null) return c.notFound();
   const blogList = await db.query.posts.findMany({
     where: {
-      RAW: (posts, { and, eq, or }) =>
-        and(
-          eq(posts.accountId, owner.id),
-          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-          eq(posts.type, "Article"),
-        )!,
+      accountId: owner.id,
+      type: "Article",
+      OR: [{ visibility: "public" }, { visibility: "unlisted" }],
     },
-    orderBy: (posts, { desc }) => [desc(posts.id)],
+    orderBy: { id: "desc" },
     limit: 50,
   });
   const postList = await db.query.posts.findMany({
     where: {
-      RAW: (posts, { and, eq, isNull, or }) =>
-        and(
-          eq(posts.accountId, owner.id),
-          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-          or(eq(posts.type, "Note"), eq(posts.type, "Question")),
-          isNull(posts.sharingId),
-        )!,
+      accountId: owner.id,
+      sharingId: { isNull: true },
+      AND: [
+        {
+          OR: [{ visibility: "public" }, { visibility: "unlisted" }],
+        },
+        {
+          OR: [{ type: "Note" }, { type: "Question" }],
+        },
+      ],
     },
-    orderBy: (posts, { desc }) => [desc(posts.id)],
+    orderBy: { id: "desc" },
     limit: 50,
     with: {
       account: true,
@@ -150,15 +150,18 @@ async function getOwnPostsForFeed(handle: string) {
   const postList = await db.query.posts.findMany({
     with: { account: true },
     where: {
-      RAW: (posts, { and, eq, isNull, or }) =>
-        and(
-          eq(posts.accountId, owner.id),
-          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-          or(eq(posts.type, "Note"), eq(posts.type, "Question")),
-          isNull(posts.sharingId),
-        )!,
+      accountId: owner.id,
+      sharingId: { isNull: true },
+      AND: [
+        {
+          OR: [{ visibility: "public" }, { visibility: "unlisted" }],
+        },
+        {
+          OR: [{ type: "Note" }, { type: "Question" }],
+        },
+      ],
     },
-    orderBy: (posts, { desc }) => [desc(posts.published)],
+    orderBy: { published: "desc" },
     limit: 100,
   });
   return { owner, postList };

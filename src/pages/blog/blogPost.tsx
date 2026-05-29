@@ -18,13 +18,13 @@ blogPost.get<"/blog/:id{[-a-f0-9]+}">(async (c) => {
   if (accountOwner == null) return c.notFound();
   const post = await db.query.posts.findFirst({
     where: {
-      RAW: (posts, { and, eq, or }) =>
-        and(
-          eq(posts.accountId, accountOwner.id),
-          eq(posts.id, postId),
-          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-          eq(posts.type, "Article"),
-        )!,
+      accountId: accountOwner.id,
+      id: postId,
+      type: "Article",
+      OR: [
+        { visibility: "public" },
+        { visibility: "unlisted" },
+      ],
     },
     with: {
       account: true,

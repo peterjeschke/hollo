@@ -1,4 +1,5 @@
 import { Article } from "@fedify/vocab";
+import { eq } from "drizzle-orm";
 
 import { db } from "../db";
 import { accounts } from "../schema";
@@ -39,17 +40,13 @@ federation.setObjectDispatcher(
       if (keyOwnerId == null) return null;
       const found = await db.query.follows.findFirst({
         where: {
-          RAW: (follows, { and, eq, inArray }) =>
-            and(
-              inArray(
-                follows.followerId,
-                db
-                  .select({ id: accounts.id })
-                  .from(accounts)
-                  .where(eq(accounts.iri, keyOwnerId.href)),
-              ),
-              eq(follows.followingId, owner.id),
-            )!,
+          followingId: owner.id,
+          followerId: {
+            inArray: db
+              .select({ id: accounts.id })
+              .from(accounts)
+              .where(eq(accounts.iri, keyOwnerId.href)),
+          },
         },
       });
       if (found == null) return null;

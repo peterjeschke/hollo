@@ -51,14 +51,14 @@ blog.get(async (c) => {
   }
   const postList = await db.query.posts.findMany({
     where: {
-      RAW: (posts, { and, eq, or }) =>
-        and(
-          eq(posts.accountId, owner.id),
-          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-          eq(posts.type, "Article"),
-        )!,
+      accountId: owner.id,
+      type: "Article",
+      OR: [
+        { visibility: "public" },
+        { visibility: "unlisted" },
+      ],
     },
-    orderBy: (posts, { desc }) => [desc(posts.id)],
+    orderBy: { id: "desc" },
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
     with: {
