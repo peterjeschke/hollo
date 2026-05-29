@@ -65,14 +65,14 @@ profile.get<"/:handle">(async (c) => {
   }
   const postList = await db.query.posts.findMany({
     where: {
-      RAW: (posts, { and, eq, or }) =>
-        and(
-          eq(posts.accountId, owner.id),
-          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-          ne(posts.type, "Article"),
-        )!,
+      accountId: owner.id,
+      type: { ne: "Article" },
+      OR: [
+        { visibility: "public" },
+        { visibility: "unlisted" }
+      ],
     },
-    orderBy: (posts, { desc }) => [desc(posts.id)],
+    orderBy: { id: "desc" },
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
     with: postViewRelations,
@@ -81,7 +81,7 @@ profile.get<"/:handle">(async (c) => {
     cont == null
       ? await db.query.pinnedPosts.findMany({
         where: { accountId: { eq: owner.id } },
-        orderBy: (pinnedPosts, { desc }) => [desc(pinnedPosts.index)],
+        orderBy: { index: "desc" },
         with: { post: { with: postViewRelations } },
       })
       : [];
@@ -151,14 +151,14 @@ profile.get("/tagged/:tag", async (c) => {
   }
   const postList = await db.query.posts.findMany({
     where: {
-      RAW: (posts, { and, eq, or, sql }) =>
-        and(
-          eq(posts.accountId, owner.id),
-          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-          sql`${posts.tags} ? ${hashtag}`,
-        )!,
+      accountId: owner.id,
+      OR: [
+        { visibility: "public" },
+        { visibility: "unlisted" },
+      ],
+      RAW: (posts) => sql`${posts.tags} ? ${hashtag}`,
     },
-    orderBy: (posts, { desc }) => [desc(posts.id)],
+    orderBy: { id: "desc" },
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
     with: postViewRelations,
@@ -309,7 +309,7 @@ profile.get("/rss.xml", async (c) => {
   const postList = await db.query.posts.findMany({
     with: { account: true },
     where: { accountId: { eq: owner.id } },
-    orderBy: (posts, { desc }) => [desc(posts.published)],
+    orderBy: { published: "desc" },
     limit: 100,
   });
   const canonicalUrl = new URL(c.req.url);

@@ -17,7 +17,7 @@ const PAGE_SIZE = 30;
 
 blog.get(async (c) => {
   const owner = await db.query.accountOwners.findFirst({
-    where: { handle: { eq: "peter" } },
+    where: { handle: "peter" },
     with: { account: true },
   });
   if (owner == null) return c.notFound();
