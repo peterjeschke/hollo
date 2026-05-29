@@ -3,6 +3,7 @@ import { trimTrailingSlash } from "hono/trailing-slash";
 
 import accounts from "./accounts";
 import auth from "./auth";
+import blog from "./blog";
 import emojis from "./emojis";
 import federation from "./federation";
 import home from "./home";
@@ -12,7 +13,6 @@ import profile from "./profile";
 import setup from "./setup";
 import tags from "./tags";
 import thumbnail_cleanup from "./thumbnail_cleanup";
-import blog from "./blog";
 
 const page = new Hono();
 

@@ -1,14 +1,10 @@
 import { Hono } from "hono";
 import xss from "xss";
+
 import { Layout } from "../../components/Layout.tsx";
+import { Post as PostView } from "../../components/Post.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
 import db from "../../db.ts";
-import { and, desc, eq, isNull, or } from "drizzle-orm";
-import { Post as PostView } from "../../components/Post.tsx";
-import {
-  accountOwners,
-  posts,
-} from "../../schema.ts";
 
 const homePage = new Hono().basePath("/");
 
@@ -24,27 +20,33 @@ homePage.get("/", async (c) => {
     return c.redirect(process.env["HOME_URL"]);
   }
   const owner = await db.query.accountOwners.findFirst({
-    where: eq(accountOwners.handle, "peter"),
+    where: { handle: { eq: "peter" } },
     with: { account: true },
   });
   if (owner == null) return c.notFound();
   const blogList = await db.query.posts.findMany({
-    where: and(
-      eq(posts.accountId, owner.id),
-      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-      eq(posts.type, "Article")
-    ),
-    orderBy: desc(posts.id),
+    where: {
+      RAW: (posts, { and, eq, or }) =>
+        and(
+          eq(posts.accountId, owner.id),
+          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+          eq(posts.type, "Article"),
+        )!,
+    },
+    orderBy: (posts, { desc }) => [desc(posts.id)],
     limit: 50,
   });
   const postList = await db.query.posts.findMany({
-    where: and(
-      eq(posts.accountId, owner.id),
-      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-      or(eq(posts.type, "Note"), eq(posts.type, "Question")),
-      isNull(posts.sharingId)
-    ),
-    orderBy: desc(posts.id),
+    where: {
+      RAW: (posts, { and, eq, isNull, or }) =>
+        and(
+          eq(posts.accountId, owner.id),
+          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+          or(eq(posts.type, "Note"), eq(posts.type, "Question")),
+          isNull(posts.sharingId),
+        )!,
+    },
+    orderBy: (posts, { desc }) => [desc(posts.id)],
     limit: 50,
     with: {
       account: true,
@@ -88,19 +90,35 @@ homePage.get("/", async (c) => {
       <section>
         <h2>About</h2>
         <p>Not much yet</p>
-        <p>This is actually a Mastodon-compatible site in the fediverse. You can follow me at <span style="user-select: all;">@peter@jeschke.dev</span> or just read my most recent posts here:</p>
+        <p>
+          This is actually a Mastodon-compatible site in the fediverse. You can
+          follow me at <span style="user-select: all;">@peter@jeschke.dev</span>{" "}
+          or just read my most recent posts here:
+        </p>
       </section>
       <div class="grid">
         <section>
-          <h2><a href="/blog">Blog</a></h2>
+          <h2>
+            <a href="/blog">Blog</a>
+          </h2>
           {blogList.map((post) => (
             <article>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                }}
+              >
                 <h2 style="margin: 0;">
-                  <a href={post.url ?? post.iri}>{post.summary ?? "Untitled"}</a>
+                  <a href={post.url ?? post.iri}>
+                    {post.summary ?? "Untitled"}
+                  </a>
                 </h2>
                 <small>
-                  <time dateTime={(post.published ?? post.updated).toISOString()}>
+                  <time
+                    dateTime={(post.published ?? post.updated).toISOString()}
+                  >
                     {(post.published ?? post.updated).toLocaleString("en", {
                       dateStyle: "medium",
                     })}
@@ -111,9 +129,11 @@ homePage.get("/", async (c) => {
           ))}
         </section>
         <section>
-          <h2><a href="/@peter">Toots</a></h2>
+          <h2>
+            <a href="/@peter">Toots</a>
+          </h2>
           {postList.map((post) => (
-            <PostView post={post} />
+            <PostView post={post} baseUrl={c.req.url} />
           ))}
         </section>
       </div>
@@ -123,19 +143,22 @@ homePage.get("/", async (c) => {
 
 async function getOwnPostsForFeed(handle: string) {
   const owner = await db.query.accountOwners.findFirst({
-    where: eq(accountOwners.handle, handle),
+    where: { handle: { eq: handle } },
     with: { account: true },
   });
   if (owner == null) return null;
   const postList = await db.query.posts.findMany({
     with: { account: true },
-    where: and(
-      eq(posts.accountId, owner.id),
-      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-      or(eq(posts.type, "Note"), eq(posts.type, "Question")),
-      isNull(posts.sharingId),
-    ),
-    orderBy: desc(posts.published),
+    where: {
+      RAW: (posts, { and, eq, isNull, or }) =>
+        and(
+          eq(posts.accountId, owner.id),
+          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+          or(eq(posts.type, "Note"), eq(posts.type, "Question")),
+          isNull(posts.sharingId),
+        )!,
+    },
+    orderBy: (posts, { desc }) => [desc(posts.published)],
     limit: 100,
   });
   return { owner, postList };
@@ -177,7 +200,11 @@ homePage.get("/atom.xml", async (c) => {
             <id>urn:uuid:{post.id}</id>
             {/* biome-ignore lint/security/noDangerouslySetInnerHtml: xss protected */}
             <title dangerouslySetInnerHTML={{ __html: title }} />
-            <link rel="alternate" type="text/html" href={post.url ?? post.iri} />
+            <link
+              rel="alternate"
+              type="text/html"
+              href={post.url ?? post.iri}
+            />
             <link
               rel="alternate"
               type="application/activity+json"

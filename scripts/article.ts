@@ -136,7 +136,11 @@ async function prompt(rl: Readline, question: string): Promise<string> {
   return (await rl.question(question)).trim();
 }
 
-async function confirm(rl: Readline, question: string, defaultYes = true): Promise<boolean> {
+async function confirm(
+  rl: Readline,
+  question: string,
+  defaultYes = true,
+): Promise<boolean> {
   const hint = defaultYes ? "[Y/n]" : "[y/N]";
   const answer = await prompt(rl, `${question} ${hint}: `);
   if (answer === "") return defaultYes;
@@ -147,7 +151,9 @@ async function confirm(rl: Readline, question: string, defaultYes = true): Promi
 // OAuth helpers
 // ---------------------------------------------------------------------------
 
-async function registerApp(instanceUrl: string): Promise<{ clientId: string; clientSecret: string }> {
+async function registerApp(
+  instanceUrl: string,
+): Promise<{ clientId: string; clientSecret: string }> {
   const res = await fetch(`${instanceUrl}/api/v1/apps`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -158,9 +164,14 @@ async function registerApp(instanceUrl: string): Promise<{ clientId: string; cli
     }),
   });
   if (!res.ok) {
-    throw new Error(`App registration failed: ${res.status} ${await res.text()}`);
+    throw new Error(
+      `App registration failed: ${res.status} ${await res.text()}`,
+    );
   }
-  const data = (await res.json()) as { client_id: string; client_secret: string };
+  const data = (await res.json()) as {
+    client_id: string;
+    client_secret: string;
+  };
   return { clientId: data.client_id, clientSecret: data.client_secret };
 }
 
@@ -191,9 +202,11 @@ async function exchangeCode(
 async function openBrowser(url: string): Promise<void> {
   try {
     const [bin, ...args] =
-      process.platform === "darwin" ? ["open", url] :
-      process.platform === "win32" ? ["cmd", "/c", "start", "", url] :
-      ["xdg-open", url];
+      process.platform === "darwin"
+        ? ["open", url]
+        : process.platform === "win32"
+          ? ["cmd", "/c", "start", "", url]
+          : ["xdg-open", url];
     spawn(bin, args, { detached: true, stdio: "ignore" }).unref();
   } catch {
     // silently ignore — URL is printed anyway
@@ -218,13 +231,19 @@ async function authenticate(
   console.log(`If it doesn't open automatically, visit:\n\n  ${authUrl}\n`);
   await openBrowser(authUrl);
 
-  const code = await prompt(rl, "Paste the authorization code shown in the browser: ");
+  const code = await prompt(
+    rl,
+    "Paste the authorization code shown in the browser: ",
+  );
   if (!code) throw new Error("No authorization code provided.");
 
   return await exchangeCode(instanceUrl, clientId, clientSecret, code);
 }
 
-async function verifyToken(instanceUrl: string, accessToken: string): Promise<boolean> {
+async function verifyToken(
+  instanceUrl: string,
+  accessToken: string,
+): Promise<boolean> {
   const res = await fetch(`${instanceUrl}/api/v1/apps/verify_credentials`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -263,7 +282,9 @@ async function postArticle(
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    throw new Error(`Failed to create article: ${res.status} ${await res.text()}`);
+    throw new Error(
+      `Failed to create article: ${res.status} ${await res.text()}`,
+    );
   }
   return (await res.json()) as PostResult;
 }
@@ -304,9 +325,13 @@ async function main(): Promise<void> {
     // -----------------------------------------------------------------------
     const config = loadConfig();
 
-    let instanceUrl = args.instanceUrl
-      ?? config.instanceUrl
-      ?? await prompt(rl, "Hollo instance URL (e.g. https://hollo.example.com): ");
+    let instanceUrl =
+      args.instanceUrl ??
+      config.instanceUrl ??
+      (await prompt(
+        rl,
+        "Hollo instance URL (e.g. https://hollo.example.com): ",
+      ));
 
     instanceUrl = instanceUrl.replace(/\/$/, "");
 
@@ -373,13 +398,15 @@ async function main(): Promise<void> {
     console.log();
 
     const title =
-      args.title
-      ?? await prompt(rl, "Article title (required): ");
+      args.title ?? (await prompt(rl, "Article title (required): "));
     if (!title) throw new Error("Title is required.");
 
     const languageInput =
-      args.language
-      ?? await prompt(rl, "Language code (e.g. en, de) [blank = account default]: ");
+      args.language ??
+      (await prompt(
+        rl,
+        "Language code (e.g. en, de) [blank = account default]: ",
+      ));
     const language = languageInput || undefined;
 
     const VISIBILITIES = ["public", "unlisted", "private", "direct"] as const;
@@ -388,7 +415,9 @@ async function main(): Promise<void> {
     let visibility: Visibility = "public";
     if (args.visibility) {
       if (!VISIBILITIES.includes(args.visibility as Visibility)) {
-        throw new Error(`Invalid visibility: ${args.visibility}. Must be one of: ${VISIBILITIES.join(", ")}`);
+        throw new Error(
+          `Invalid visibility: ${args.visibility}. Must be one of: ${VISIBILITIES.join(", ")}`,
+        );
       }
       visibility = args.visibility as Visibility;
     } else {
@@ -404,8 +433,7 @@ async function main(): Promise<void> {
     }
 
     const sensitive =
-      args.sensitive
-      ?? await confirm(rl, "Mark as sensitive?", false);
+      args.sensitive ?? (await confirm(rl, "Mark as sensitive?", false));
 
     // -----------------------------------------------------------------------
     // 5. Confirm and publish
@@ -419,7 +447,7 @@ Sensitive:  ${sensitive}
 HTML size:  ${contentHtml.length} bytes
 -----------------------`);
 
-    const ok = args.yes || await confirm(rl, "\nPublish?", true);
+    const ok = args.yes || (await confirm(rl, "\nPublish?", true));
     if (!ok) {
       console.log("Aborted.");
       process.exitCode = 0;

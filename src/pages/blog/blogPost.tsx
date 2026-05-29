@@ -1,16 +1,10 @@
-import { and, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
+
 import { Layout } from "../../components/Layout.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
 import { renderCustomEmojis } from "../../custom-emoji";
 import db from "../../db.ts";
-import {
-  type Account,
-  type AccountOwner,
-  type Post,
-  accountOwners,
-  posts,
-} from "../../schema.ts";
+import { type Account, type AccountOwner, type Post } from "../../schema.ts";
 import { isUuid } from "../../uuid.ts";
 
 const blogPost = new Hono();
@@ -19,16 +13,19 @@ blogPost.get<"/blog/:id{[-a-f0-9]+}">(async (c) => {
   const postId = c.req.param("id");
   if (!isUuid(postId)) return c.notFound();
   const accountOwner = await db.query.accountOwners.findFirst({
-    where: eq(accountOwners.handle, "peter"),
+    where: { handle: { eq: "peter" } },
   });
   if (accountOwner == null) return c.notFound();
   const post = await db.query.posts.findFirst({
-    where: and(
-      eq(posts.accountId, accountOwner.id),
-      eq(posts.id, postId),
-      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-      eq(posts.type, "Article"),
-    ),
+    where: {
+      RAW: (posts, { and, eq, or }) =>
+        and(
+          eq(posts.accountId, accountOwner.id),
+          eq(posts.id, postId),
+          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+          eq(posts.type, "Article"),
+        )!,
+    },
     with: {
       account: true,
     },
@@ -43,7 +40,11 @@ interface PostPageProps {
 }
 
 function PostPage({ post, accountOwner }: PostPageProps) {
-  const contentHtml = renderCustomEmojis(post.contentHtml, post.emojis);
+  const contentHtml = renderCustomEmojis(
+    post.contentHtml,
+    post.emojis,
+    post.url ?? post.iri,
+  );
   const title = post.summary ?? "Blog post";
   return (
     <Layout

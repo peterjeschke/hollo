@@ -1,4 +1,4 @@
-import { and, count, eq, or, ne, sql } from "drizzle-orm";
+import { and, count, eq, ne, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import xss from "xss";
 
@@ -66,7 +66,7 @@ profile.get<"/:handle">(async (c) => {
   const postList = await db.query.posts.findMany({
     where: {
       RAW: (posts, { and, eq, or }) =>
-         and(
+        and(
           eq(posts.accountId, owner.id),
           or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
           ne(posts.type, "Article"),
@@ -224,8 +224,8 @@ function ProfilePage({
         ...(atomUrl == null
           ? []
           : [
-            { rel: "alternate", type: "application/atom+xml", href: atomUrl },
-          ]),
+              { rel: "alternate", type: "application/atom+xml", href: atomUrl },
+            ]),
         {
           rel: "alternate",
           type: "application/activity+json",
@@ -302,14 +302,14 @@ profile.get("/rss.xml", async (c) => {
   if (handle == null) return c.notFound();
   if (handle.startsWith("@")) handle = handle.substring(1);
   const owner = await db.query.accountOwners.findFirst({
-    where: eq(accountOwners.handle, handle),
+    where: { handle: { eq: handle } },
     with: { account: true },
   });
   if (owner == null) return c.notFound();
   const postList = await db.query.posts.findMany({
     with: { account: true },
-    where: eq(posts.accountId, owner.id),
-    orderBy: desc(posts.published),
+    where: { accountId: { eq: owner.id } },
+    orderBy: (posts, { desc }) => [desc(posts.published)],
     limit: 100,
   });
   const canonicalUrl = new URL(c.req.url);

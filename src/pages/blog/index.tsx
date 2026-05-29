@@ -1,15 +1,11 @@
-import { and, count, desc, eq, or } from "drizzle-orm";
+import { and, count, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
 import xss from "xss";
+
 import { Layout } from "../../components/Layout.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
 import { db } from "../../db.ts";
-import {
-  type Account,
-  type Post,
-  accountOwners,
-  posts,
-} from "../../schema.ts";
+import { type Account, type Post, posts } from "../../schema.ts";
 import { isUuid } from "../../uuid.ts";
 import blogPost from "./blogPost.tsx";
 
@@ -21,7 +17,7 @@ const PAGE_SIZE = 30;
 
 blog.get(async (c) => {
   const owner = await db.query.accountOwners.findFirst({
-    where: eq(accountOwners.handle, "peter"),
+    where: { handle: { eq: "peter" } },
     with: { account: true },
   });
   if (owner == null) return c.notFound();
@@ -46,7 +42,7 @@ blog.get(async (c) => {
       and(
         eq(posts.accountId, owner.id),
         or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-        eq(posts.type, "Article")
+        eq(posts.type, "Article"),
       ),
     );
   const maxPage = Math.ceil(totalPosts / PAGE_SIZE);
@@ -54,12 +50,15 @@ blog.get(async (c) => {
     return c.notFound();
   }
   const postList = await db.query.posts.findMany({
-    where: and(
-      eq(posts.accountId, owner.id),
-      or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
-      eq(posts.type, "Article")
-    ),
-    orderBy: desc(posts.id),
+    where: {
+      RAW: (posts, { and, eq, or }) =>
+        and(
+          eq(posts.accountId, owner.id),
+          or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+          eq(posts.type, "Article"),
+        )!,
+    },
+    orderBy: (posts, { desc }) => [desc(posts.id)],
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
     with: {
@@ -89,12 +88,7 @@ interface ProfilePageProps {
   readonly newerUrl?: string;
 }
 
-function ProfilePage({
-  posts,
-  atomUrl,
-  olderUrl,
-  newerUrl,
-}: ProfilePageProps) {
+function ProfilePage({ posts, atomUrl, olderUrl, newerUrl }: ProfilePageProps) {
   return (
     <Layout
       title="Blog"
@@ -105,7 +99,13 @@ function ProfilePage({
       <SiteHeader />
       {posts.map((post) => (
         <article>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+            }}
+          >
             <h2 style="margin: 0;">
               <a href={post.url ?? post.iri}>{post.summary ?? "Untitled"}</a>
             </h2>
@@ -129,14 +129,17 @@ function ProfilePage({
 
 blog.get("/rss.xml", async (c) => {
   const owner = await db.query.accountOwners.findFirst({
-    where: eq(accountOwners.handle, "peter"),
+    where: { handle: { eq: "peter" } },
     with: { account: true },
   });
   if (owner == null) return c.notFound();
   const postList = await db.query.posts.findMany({
     with: { account: true },
-    where: and(eq(posts.accountId, owner.id), eq(posts.type, "Article")),
-    orderBy: desc(posts.published),
+    where: {
+      accountId: { eq: owner.id },
+      type: { eq: "Article" },
+    },
+    orderBy: (posts, { desc }) => [desc(posts.published)],
     limit: 100,
   });
   const canonicalUrl = new URL(c.req.url);
@@ -181,17 +184,17 @@ blog.get("/rss.xml", async (c) => {
 
 blog.get("/atom.xml", async (c) => {
   const owner = await db.query.accountOwners.findFirst({
-    where: eq(accountOwners.handle, "peter"),
+    where: { handle: { eq: "peter" } },
     with: { account: true },
   });
   if (owner == null) return c.notFound();
   const postList = await db.query.posts.findMany({
     with: { account: true },
-    where: and(
-      eq(posts.accountId, owner.id),
-      eq(posts.type, "Article")
-    ),
-    orderBy: desc(posts.published),
+    where: {
+      accountId: { eq: owner.id },
+      type: { eq: "Article" },
+    },
+    orderBy: (posts, { desc }) => [desc(posts.published)],
     limit: 100,
   });
   const canonicalUrl = new URL(c.req.url);
