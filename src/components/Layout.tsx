@@ -94,7 +94,6 @@ export function Layout(props: PropsWithChildren<LayoutProps>) {
           title="Own posts (RSS)"
           href="/rss.xml"
         />
-        <link rel="stylesheet" href="/public/hollo.css" />
         <link
           rel="icon"
           type="image/png"
