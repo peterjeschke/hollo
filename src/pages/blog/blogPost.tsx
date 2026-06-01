@@ -21,10 +21,7 @@ blogPost.get<"/blog/:id{[-a-f0-9]+}">(async (c) => {
       accountId: accountOwner.id,
       id: postId,
       type: "Article",
-      OR: [
-        { visibility: "public" },
-        { visibility: "unlisted" },
-      ],
+      OR: [{ visibility: "public" }, { visibility: "unlisted" }],
     },
     with: {
       account: true,

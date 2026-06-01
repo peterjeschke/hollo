@@ -53,10 +53,7 @@ blog.get(async (c) => {
     where: {
       accountId: owner.id,
       type: "Article",
-      OR: [
-        { visibility: "public" },
-        { visibility: "unlisted" },
-      ],
+      OR: [{ visibility: "public" }, { visibility: "unlisted" }],
     },
     orderBy: { id: "desc" },
     limit: PAGE_SIZE,

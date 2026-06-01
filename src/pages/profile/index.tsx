@@ -67,10 +67,7 @@ profile.get<"/:handle">(async (c) => {
     where: {
       accountId: owner.id,
       type: { ne: "Article" },
-      OR: [
-        { visibility: "public" },
-        { visibility: "unlisted" }
-      ],
+      OR: [{ visibility: "public" }, { visibility: "unlisted" }],
     },
     orderBy: { id: "desc" },
     limit: PAGE_SIZE,
@@ -80,10 +77,10 @@ profile.get<"/:handle">(async (c) => {
   const pinnedPostList =
     cont == null
       ? await db.query.pinnedPosts.findMany({
-        where: { accountId: { eq: owner.id } },
-        orderBy: { index: "desc" },
-        with: { post: { with: postViewRelations } },
-      })
+          where: { accountId: { eq: owner.id } },
+          orderBy: { index: "desc" },
+          with: { post: { with: postViewRelations } },
+        })
       : [];
   const featuredTagList = await db.query.featuredTags.findMany({
     where: { accountOwnerId: { eq: owner.id } },
@@ -152,10 +149,7 @@ profile.get("/tagged/:tag", async (c) => {
   const postList = await db.query.posts.findMany({
     where: {
       accountId: owner.id,
-      OR: [
-        { visibility: "public" },
-        { visibility: "unlisted" },
-      ],
+      OR: [{ visibility: "public" }, { visibility: "unlisted" }],
       RAW: (posts) => sql`${posts.tags} ? ${hashtag}`,
     },
     orderBy: { id: "desc" },
@@ -224,8 +218,8 @@ function ProfilePage({
         ...(atomUrl == null
           ? []
           : [
-            { rel: "alternate", type: "application/atom+xml", href: atomUrl },
-          ]),
+              { rel: "alternate", type: "application/atom+xml", href: atomUrl },
+            ]),
         {
           rel: "alternate",
           type: "application/activity+json",
@@ -361,10 +355,7 @@ profile.get("/atom.xml", async (c) => {
     with: { account: true },
     where: {
       accountId: owner.id,
-      OR: [
-        { visibility: "public" },
-        { visibility: "unlisted" }
-      ]
+      OR: [{ visibility: "public" }, { visibility: "unlisted" }],
     },
     orderBy: { published: "desc" },
     limit: 100,

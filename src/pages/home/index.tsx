@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import { Hono } from "hono";
 import xss from "xss";
 
@@ -5,13 +6,12 @@ import { Layout } from "../../components/Layout.tsx";
 import { Post as PostView } from "../../components/Post.tsx";
 import { SiteHeader } from "../../components/SiteHeader.tsx";
 import db from "../../db.ts";
-import { getLogger } from "@logtape/logtape";
 
 const logger = getLogger(["hollo", "home"]);
 const homePage = new Hono().basePath("/");
 
 homePage.get("/", async (c) => {
-  logger.info("GET /")
+  logger.info("GET /");
   if (
     "HOME_URL" in process.env &&
     // oxlint-disable-next-line typescript/dot-notation
@@ -26,7 +26,7 @@ homePage.get("/", async (c) => {
     where: { handle: { eq: "peter" } },
     with: { account: true },
   });
-  logger.info("owner: " + owner)
+  logger.info("owner: " + owner);
   if (owner == null) return c.notFound();
   const blogList = await db.query.posts.findMany({
     where: {
@@ -37,7 +37,7 @@ homePage.get("/", async (c) => {
     orderBy: { id: "desc" },
     limit: 50,
   });
-  logger.info("bloglist")
+  logger.info("bloglist");
   const postList = await db.query.posts.findMany({
     where: {
       accountId: owner.id,
@@ -89,7 +89,7 @@ homePage.get("/", async (c) => {
     },
   });
 
-  logger.info("postlist")
+  logger.info("postlist");
   return c.html(
     <Layout title="Peter Jeschke">
       <SiteHeader>
@@ -97,9 +97,10 @@ homePage.get("/", async (c) => {
           <h2>About</h2>
           <p>Not much yet</p>
           <p>
-            This is actually a Mastodon-compatible site in the fediverse. You can
-            follow me at <span style="user-select: all;">@peter@jeschke.dev</span>{" "}
-            or just read my most recent posts here:
+            This is actually a Mastodon-compatible site in the fediverse. You
+            can follow me at{" "}
+            <span style="user-select: all;">@peter@jeschke.dev</span> or just
+            read my most recent posts here:
           </p>
         </section>
       </SiteHeader>
@@ -149,13 +150,13 @@ homePage.get("/", async (c) => {
 });
 
 async function getOwnPostsForFeed(handle: string) {
-  logger.info("=> getOwnPostsForFeed")
+  logger.info("=> getOwnPostsForFeed");
   const owner = await db.query.accountOwners.findFirst({
     where: { handle: { eq: handle } },
     with: { account: true },
   });
   if (owner == null) return null;
-  logger.info("=> getOwnPostsForFeed: before postList")
+  logger.info("=> getOwnPostsForFeed: before postList");
   const postList = await db.query.posts.findMany({
     with: { account: true },
     where: {
@@ -173,7 +174,7 @@ async function getOwnPostsForFeed(handle: string) {
     orderBy: { published: "desc" },
     limit: 100,
   });
-  logger.info("<= getOwnPostsForFeed")
+  logger.info("<= getOwnPostsForFeed");
   return { owner, postList };
 }
 
