@@ -55,22 +55,20 @@ function PostPage({ post, accountOwner }: PostPageProps) {
       themeColor={accountOwner.themeColor}
     >
       <SiteHeader />
-      <article>
-        <header>
-          <h2>{title}</h2>
-          <p>
-            <small>
-              Published{" "}
-              <time dateTime={(post.published ?? post.updated).toISOString()}>
-                {(post.published ?? post.updated).toLocaleString("en", {
-                  dateStyle: "long",
-                })}
-              </time>
-            </small>
+      <article class="mx-auto w-full max-w-2xl px-4 py-8 sm:py-10 py-2">
+        <header class="flex items-start gap-3">
+          <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">
+            Published{" "}
+            <time dateTime={(post.published ?? post.updated).toISOString()}>
+              {(post.published ?? post.updated).toLocaleString("en", {
+                dateStyle: "long",
+              })}
+            </time>
           </p>
         </header>
         {contentHtml && (
-          <div
+          <div class="mt-3 prose prose-base prose-neutral dark:prose-invert prose-a:text-brand-700 dark:prose-a:text-brand-400 max-w-none break-words"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
             lang={post.language ?? undefined}
           />

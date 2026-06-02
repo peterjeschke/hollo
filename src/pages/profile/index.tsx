@@ -17,6 +17,7 @@ import follows from "./follows.tsx";
 import postReactions from "./postReactions.tsx";
 import { postViewRelations } from "./postRelations.ts";
 import profilePost from "./profilePost.tsx";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
 
 const profile = new Hono();
 
@@ -77,10 +78,10 @@ profile.get<"/:handle">(async (c) => {
   const pinnedPostList =
     cont == null
       ? await db.query.pinnedPosts.findMany({
-          where: { accountId: { eq: owner.id } },
-          orderBy: { index: "desc" },
-          with: { post: { with: postViewRelations } },
-        })
+        where: { accountId: { eq: owner.id } },
+        orderBy: { index: "desc" },
+        with: { post: { with: postViewRelations } },
+      })
       : [];
   const featuredTagList = await db.query.featuredTags.findMany({
     where: { accountOwnerId: { eq: owner.id } },
@@ -218,8 +219,8 @@ function ProfilePage({
         ...(atomUrl == null
           ? []
           : [
-              { rel: "alternate", type: "application/atom+xml", href: atomUrl },
-            ]),
+            { rel: "alternate", type: "application/atom+xml", href: atomUrl },
+          ]),
         {
           rel: "alternate",
           type: "application/activity+json",
@@ -229,7 +230,7 @@ function ProfilePage({
       themeColor={accountOwner.themeColor}
     >
       <main class="mx-auto w-full max-w-2xl px-4 py-8 sm:py-10">
-        <Profile accountOwner={accountOwner} baseUrl={baseUrl} />
+        <SiteHeader />
         {tag != null && (
           <h2 class="mt-10 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
             Posts tagged{" "}

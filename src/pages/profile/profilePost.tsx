@@ -7,6 +7,7 @@ import { type AccountOwner } from "../../schema.ts";
 import { isUuid } from "../../uuid.ts";
 import { postViewRelations } from "./postRelations.ts";
 import { summarizePostForTitle } from "./summary.ts";
+import { SiteHeader } from "../../components/SiteHeader.tsx";
 
 const profilePost = new Hono();
 
@@ -64,6 +65,7 @@ function PostPage({ post, accountOwner, baseUrl }: PostPageProps) {
       ]}
       themeColor={accountOwner.themeColor}
     >
+      <SiteHeader />
       <main class="mx-auto w-full max-w-2xl px-4 py-8 sm:py-10">
         <PostView post={post} featured={true} baseUrl={baseUrl} />
         {post.replies.length > 0 && (
