@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
 import { Layout } from "../../components/Layout.tsx";
-import { type PostForView } from "../../components/Post.tsx";
+import { type PostForView, Post as PostView } from "../../components/Post.tsx";
 import db from "../../db.ts";
 import { type AccountOwner } from "../../schema.ts";
 import { isUuid } from "../../uuid.ts";
@@ -39,15 +39,18 @@ profilePost.get<"/:handle{@[^/]+}/:id{[-a-f0-9]+}">(async (c) => {
     },
   });
   if (post == null) return c.notFound();
-  return c.html(<PostPage post={post} accountOwner={accountOwner} />);
+  return c.html(
+    <PostPage post={post} accountOwner={accountOwner} baseUrl={c.req.url} />,
+  );
 });
 
 interface PostPageProps {
   readonly accountOwner: AccountOwner;
   readonly post: PostForView & { replies: PostForView[] };
+  readonly baseUrl: URL | string;
 }
 
-function PostPage({ post, accountOwner }: PostPageProps) {
+function PostPage({ post, accountOwner, baseUrl }: PostPageProps) {
   const summary = summarizePostForTitle(post);
   return (
     <Layout
@@ -60,7 +63,25 @@ function PostPage({ post, accountOwner }: PostPageProps) {
         { rel: "alternate", type: "application/activity+json", href: post.iri },
       ]}
       themeColor={accountOwner.themeColor}
-    ></Layout>
+    >
+      <main class="mx-auto w-full max-w-2xl px-4 py-8 sm:py-10">
+        <PostView post={post} featured={true} baseUrl={baseUrl} />
+        {post.replies.length > 0 && (
+          <section class="mt-8">
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+              {post.replies.length === 1
+                ? "1 reply"
+                : `${post.replies.length} replies`}
+            </h2>
+            <div class="mt-2 divide-y divide-neutral-200 dark:divide-neutral-800">
+              {post.replies.map((reply) => (
+                <PostView post={reply} baseUrl={baseUrl} />
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+    </Layout>
   );
 }
 
