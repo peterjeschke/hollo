@@ -100,8 +100,8 @@ homePage.get("/", async (c) => {
           read my most recent posts here:
         </p>
       </SiteHeader>
-      <div class="grid grid-cols-2 gap-40">
-        <section class="max-w-l mx-auto mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
+      <div class="w-full mx-auto max-w-5xl grid grid-cols-2 gap-40">
+        <section class="w-full max-w-l mx-auto mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
           <h1 class="text-3xl">
             <a href="/blog">Blog</a>
           </h1>
@@ -124,7 +124,7 @@ homePage.get("/", async (c) => {
             </article>
           ))}
         </section>
-        <section class="max-w-l mx-auto mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
+        <section class="w-full max-w-l mx-auto mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
           <h1 class="text-3xl">
             <a href="/@peter">Toots</a>
           </h1>
