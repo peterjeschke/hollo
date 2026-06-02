@@ -93,19 +93,15 @@ homePage.get("/", async (c) => {
   return c.html(
     <Layout title="Peter Jeschke">
       <SiteHeader>
-        <section>
-          <h2>About</h2>
-          <p>Not much yet</p>
-          <p>
-            This is actually a Mastodon-compatible site in the fediverse. You
-            can follow me at{" "}
-            <span style="user-select: all;">@peter@jeschke.dev</span> or just
-            read my most recent posts here:
-          </p>
-        </section>
+        <p>
+          This is actually a Mastodon-compatible site in the fediverse. You
+          can follow me at{" "}
+          <span style="user-select: all;">@peter@jeschke.dev</span> or just
+          read my most recent posts here:
+        </p>
       </SiteHeader>
-      <div class="grid">
-        <section class="mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
+      <div class="grid grid-cols-2 gap-40">
+        <section class="max-w-l mx-auto mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
           <h2>
             <a href="/blog">Blog</a>
           </h2>
@@ -136,7 +132,7 @@ homePage.get("/", async (c) => {
             </article>
           ))}
         </section>
-        <section class="mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
+        <section class="max-w-l mx-auto mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
           <h2>
             <a href="/@peter">Toots</a>
           </h2>
