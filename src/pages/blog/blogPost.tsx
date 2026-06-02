@@ -56,7 +56,7 @@ function PostPage({ post, accountOwner }: PostPageProps) {
     >
       <SiteHeader />
       <article class="mx-auto w-full max-w-2xl px-4 py-8 sm:py-10 py-2">
-        <header class="flex items-start gap-3">
+        <header class="items-start gap-3">
           <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
           <p class="text-xs text-neutral-500 dark:text-neutral-400">
             Published{" "}

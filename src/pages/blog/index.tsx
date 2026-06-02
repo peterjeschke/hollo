@@ -94,28 +94,20 @@ function ProfilePage({ posts, atomUrl, olderUrl, newerUrl }: ProfilePageProps) {
       ]}
     >
       <SiteHeader />
-      {posts.map((post) => (
-        <article>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-            }}
-          >
-            <h2 style="margin: 0;">
+      <div class="mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
+        {posts.map((post) => (
+          <article class="py-5 flex justify-between align-baseline">
+            <h2 class="font-semibold text-neutral-900 dark:text-neutral-100">
               <a href={post.url ?? post.iri}>{post.summary ?? "Untitled"}</a>
             </h2>
-            <small>
-              <time dateTime={(post.published ?? post.updated).toISOString()}>
-                {(post.published ?? post.updated).toLocaleString("en", {
-                  dateStyle: "medium",
-                })}
-              </time>
-            </small>
-          </div>
-        </article>
-      ))}
+            <time class="text-xs text-neutral-500 dark:text-neutral-400" dateTime={(post.published ?? post.updated).toISOString()}>
+              {(post.published ?? post.updated).toLocaleString("en", {
+                dateStyle: "medium",
+              })}
+            </time>
+          </article>
+        ))}
+      </div>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>{newerUrl && <a href={newerUrl}>&larr; Newer</a>}</div>
         <div>{olderUrl && <a href={olderUrl}>Older &rarr;</a>}</div>
