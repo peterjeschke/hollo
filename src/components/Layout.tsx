@@ -110,7 +110,7 @@ export function Layout(props: PropsWithChildren<LayoutProps>) {
         />
       </head>
       <body class="min-h-screen bg-neutral-50 text-neutral-900 font-sans antialiased dark:bg-neutral-950 dark:text-neutral-100">
-        <main class="mx-auto w-full max-w-2xl px-4 py-8 sm:py-10">
+        <main class="mx-auto w-full px-4 py-8 sm:py-10">
           {props.children}
         </main>
       </body>

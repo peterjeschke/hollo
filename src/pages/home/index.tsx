@@ -102,40 +102,32 @@ homePage.get("/", async (c) => {
       </SiteHeader>
       <div class="grid grid-cols-2 gap-40">
         <section class="max-w-l mx-auto mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
-          <h2>
+          <h1 class="text-3xl">
             <a href="/blog">Blog</a>
-          </h2>
+          </h1>
           {blogList.map((post) => (
-            <article>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                }}
-              >
-                <h2 style="margin: 0;">
-                  <a href={post.url ?? post.iri}>
-                    {post.summary ?? "Untitled"}
-                  </a>
-                </h2>
-                <small>
-                  <time
-                    dateTime={(post.published ?? post.updated).toISOString()}
-                  >
-                    {(post.published ?? post.updated).toLocaleString("en", {
-                      dateStyle: "medium",
-                    })}
-                  </time>
-                </small>
-              </div>
+            <article class="py-5 flex flex-row justify-between items-baseline">
+              <h2 class="font-semibold text-neutral-900 dark:text-neutral-100">
+                <a href={post.url ?? post.iri}>
+                  {post.summary ?? "Untitled"}
+                </a>
+              </h2>
+              <small>
+                <time
+                  dateTime={(post.published ?? post.updated).toISOString()}
+                >
+                  {(post.published ?? post.updated).toLocaleString("en", {
+                    dateStyle: "medium",
+                  })}
+                </time>
+              </small>
             </article>
           ))}
         </section>
         <section class="max-w-l mx-auto mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
-          <h2>
+          <h1 class="text-3xl">
             <a href="/@peter">Toots</a>
-          </h2>
+          </h1>
           {postList.map((post) => (
             <PostView post={post} baseUrl={c.req.url} />
           ))}
