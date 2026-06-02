@@ -112,15 +112,13 @@ homePage.get("/", async (c) => {
                   {post.summary ?? "Untitled"}
                 </a>
               </h2>
-              <small>
-                <time
-                  dateTime={(post.published ?? post.updated).toISOString()}
-                >
-                  {(post.published ?? post.updated).toLocaleString("en", {
-                    dateStyle: "medium",
-                  })}
-                </time>
-              </small>
+              <time class="text-xs text-neutral-500 dark:text-neutral-400"
+                dateTime={(post.published ?? post.updated).toISOString()}
+              >
+                {(post.published ?? post.updated).toLocaleString("en", {
+                  dateStyle: "medium",
+                })}
+              </time>
             </article>
           ))}
         </section>
